@@ -6,25 +6,11 @@ import requests
 import urllib2
 import cookielib
 from lxml import etree
-from config import config
+#from config import config
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-# HTTP_HEADERS = {
-#     'Accept'':''application/json, text/javascript',
-# 	'Accept-Encoding'':''gzip, deflate',
-# 	'Accept-Language'':''zh-CN,zh;q=0.8',
-# 	'Content-Length'':''21',
-# 	'Content-Type'':''application/x-www-form-urlencoded;charset=UTF-8;',
-# 	'Cookie'':''_hc.v=a2191b18-0b92-c093-4de3-e74d5fba8273.1473007045; __utma=205923334.618598470.1477727672.1477727672.1478019961.2; __utmz=205923334.1477727672.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); PHOENIX_ID=0a018333-1582e6765c3-5322b4; s_ViewType=10; JSESSIONID=180BA04564BB5583B9A3C217C19D98FF; aburl=1; cy=2; cye=beijing',
-# 	'Host'':''www.dianping.com',
-# 	'Origin'':''http':'//www.dianping.com',
-# 	'Proxy-Connection'':''keep-alive',
-# 	# 'Referer'':''http':'//www.dianping.com/member/97899/checkin',
-# 	'User-Agent'':''Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36',
-# 	'X-Request'':''JSON',
-# 	'X-Requested-With'':''XMLHttpRequest'	
-# }
+
 
 HTTP_HEADERS = {
 	'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',

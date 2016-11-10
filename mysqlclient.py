@@ -11,15 +11,14 @@ class MysqlClient:
 		self.db = 'herb'
 		self.conn = pymysql.connect(host=host,user=user,passwd=passwd,db=db,port=port,charset='utf8')
 		self.cur = self.conn.cursor()
+
 	def close_Conn(self):
-	#	self.conn.commit()
 		self.cur.close()
 		self.conn.close()
 	
 	def insert(self,dic_list,table_name,**postDic):
 		sql_join = "insert into  "+ table_name +"(" + ','.join(dic_list) + ") values  (\'%("+')s\',\'%('.join(dic_list)+") s\' )"
 		sql = sql_join % postDic
-		print (sql)
 		self.cur.execute(sql)
 		self.conn.commit()
 

@@ -6,6 +6,7 @@ from httpparser import HttpParser
 from queue import Queue
 from redisclient import RedisConnect
 from mysqlclient import MysqlClient
+from log import Logger
 import time
 import sys
 import re
@@ -16,6 +17,7 @@ import json
 import time
 
 
+
 class UrlRunnable:
 	
 	def __init__(self):
@@ -23,7 +25,8 @@ class UrlRunnable:
 		self.httpParser = HttpParser()
 		self.redisConn = RedisConnect()
 		self.start_url = "http://www.dianping.com/shopall/2/0"
-		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
+		self.log = Logger()
+		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 
 
 	def saveHtml(self,url,param,html):
@@ -56,7 +59,7 @@ class UrlRunnable:
 					postDic["tag_link"] = link_urls[i]
 					postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) 
 					postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-					self.mysqlConn.insert(dic_list,"storeTag",**postDic)
+					#self.mysqlConn.insert(dic_list,"storeTag",**postDic)
 		except:
 			print (sys.exc_info())
 		#return link_url
@@ -122,8 +125,8 @@ class UrlRunnable:
 						else:
 							postDic["review"] = ''
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                                        	postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"store",**postDic)
+                        postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+						#self.mysqlConn.insert(dic_list,"store",**postDic)
 					self.redisConn.sadd("success::tag::url",url+'p'+str(page))
 				
 				except:
@@ -171,7 +174,7 @@ class UrlRunnable:
 							postDic["user_level"] = ''
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
                                                 postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"user",**postDic)
+						#self.mysqlConn.insert(dic_list,"user",**postDic)
 					self.redisConn.sadd("success::store",store)
 				
 				except:
@@ -215,7 +218,7 @@ class UrlRunnable:
 						postDic["crawl_time"] = review_crawl_time[0]
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
                                                 postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"user_review",**postDic)
+						#self.mysqlConn.insert(dic_list,"user_review",**postDic)
 						
 					self.redisConn.sadd("success::review",user)
 					page = page+1
@@ -260,7 +263,7 @@ class UrlRunnable:
 						postDic["crawl_time"] = wish_crawl_time[0] 
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) 
 						postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"user_wish",**postDic)
+						#self.mysqlConn.insert(dic_list,"user_wish",**postDic)
 					
 					self.redisConn.sadd("success::wish",user)
 					page = page+1
@@ -307,7 +310,7 @@ class UrlRunnable:
 					postDic["crawl_time"] = chechin_crawl_time[0]
 					postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 					postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-					self.mysqlConn.insert(dic_list,"user_checkin",**postDic)
+					#self.mysqlConn.insert(dic_list,"user_checkin",**postDic)
 
 				if page :
 					for i in range(page):
@@ -327,7 +330,7 @@ class UrlRunnable:
                                         		postDic["crawl_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
                                         		postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
                                         		postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))						
-							self.mysqlConn.insert(dic_list,"user_checkin",**postDic)
+							#self.mysqlConn.insert(dic_list,"user_checkin",**postDic)
 				self.redisConn.sadd("success::checkin",member)
 
 			except:	
@@ -337,6 +340,6 @@ class UrlRunnable:
 	
 
 a = UrlRunnable()
-#a.linksUrl()
-a.StoreUrl()
+a.linksUrl()
+#a.StoreUrl()
 
