@@ -1,7 +1,7 @@
 #-*-coding:utf8-*-
 #! /usr/bin/python
 #encoding=utf-8
-from runnable import UrlRunnable,CompanyRunnable,CreditRunnable,LinksRunnable,ProductRunnable,ContactRunnable
+from runnable import UrlRunnable
 from threadwork import ThreadPool
 
 import sys

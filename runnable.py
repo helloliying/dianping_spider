@@ -25,8 +25,8 @@ class UrlRunnable:
 		self.httpParser = HttpParser()
 		self.redisConn = RedisConnect()
 		self.start_url = "http://www.dianping.com/shopall/2/0"
-		self.log = Logger()
-		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
+		self.logger = Logger()
+		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 
 
 	def saveHtml(self,url,param,html):
@@ -43,14 +43,11 @@ class UrlRunnable:
 		try:
 			html = self.httpRequest.get(self.start_url)
 			sites = self.httpParser.parseNode(html,'//div[@class="main_w"]/div/div[1]/dl')
-			print (sites)
 			postDic = {}
 			dic_list = ["tag_level_1","tag_level_2","tag_link","create_time","update_time"]
 			for site in sites:
 				tags = site.xpath('dt/a/text()')
-				print (tags)
 				link_urls = site.xpath('dd/ul/li/a/@href')
-				print (link_urls)
 				self.redisConn.sadd("dianping::tag",*link_urls)
 				link_tags = site.xpath('dd/ul/li/a/text()')
 				for i in range(len(link_tags)):
@@ -64,15 +61,14 @@ class UrlRunnable:
 			print (sys.exc_info())
 		#return link_url
 
-	def StoreUrl(self):
-
+	def run(self):
+		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		while self.redisConn.scard("dianping::tag")>0:
 	#	while self.redisConn.scard("test") >0 :
 			tag = self.redisConn.pop("dianping::tag")
 	#		tag = self.redisConn.pop("test")
 			url = "http://www.dianping.com"+tag
-			print (url)
-			
+			self.logger.info("start StoreUrl:"+url)
 			postDic = {}
 			dic_list = ["store_url","store_name","father_url","father_tag","store_score","trade_area","location","cost","review","create_time","update_time","longitude","latitude"]
 			
@@ -80,10 +76,11 @@ class UrlRunnable:
 			count = 19
 	
 			while count>=15 and page<=50:
-				page = page+1
-				print ("===page==="+str(page))
-				try:
+					page = page+1
+				
+				#try:
 					html = self.httpRequest.get(url+'p'+str(page))
+					#self.logger.info("start StoreUrl: "+url+'p'+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@id="shop-all-list"]/ul/li')
 					for site in sites:
 						store_urls = site.xpath('div[2]/div[1]/a[1]/@href')
@@ -94,7 +91,7 @@ class UrlRunnable:
 						latitude = extract_address[0][2]
 						postDic["longitude"] = longitude 
 						postDic["latitude"] =  latitude
-						self.saveHtml(store_urls[0],"store",store_html)					
+						#self.saveHtml(store_urls[0],"store",store_html)					
 	
 						store_names = site.xpath('div[2]/div[1]/a[1]/@title')
 						father_tag = site.xpath('div[2]/div[3]/a[1]/span/text()')
@@ -125,19 +122,29 @@ class UrlRunnable:
 						else:
 							postDic["review"] = ''
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                        postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						#self.mysqlConn.insert(dic_list,"store",**postDic)
+						postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+						self.mysqlConn.insert(dic_list,"store",**postDic)
 					self.redisConn.sadd("success::tag::url",url+'p'+str(page))
 				
-				except:
-					self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
-					self.redisConn.sadd("failed::tag",tag)
-                                        print (sys.exc_info())
+			#	except:
+			#		self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
+			#		self.redisConn.sadd("failed::tag",tag)
+			#		print (type(sys.exc_info()))
+			#		print (sys.exc_info())
+					#self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error '+sys.exc_info())
 				
-				count = len(sites)
-				time.sleep(5)
+					count = len(sites)
+					time.sleep(5)
 		#return link_url
 
+
+class User(object):
+	def __init__(self):
+		self.httpRequest = HttpRequest()
+		self.httpParser = HttpParser()
+		self.redisConn = RedisConnect()
+		self.logger = Logger()
+		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 
 	def UserUrl(self):
 		while self.redisConn.scard("dianping::store")>0:
@@ -339,7 +346,7 @@ class UrlRunnable:
 
 	
 
-a = UrlRunnable()
-a.linksUrl()
+#a = UrlRunnable()
+#a.run()
 #a.StoreUrl()
 

@@ -8,7 +8,7 @@ import pymysql
 class MysqlClient:
 	
 	def __init__(self,host,user,passwd,db,port):
-		self.db = 'herb'
+		self.db = 'dianping'
 		self.conn = pymysql.connect(host=host,user=user,passwd=passwd,db=db,port=port,charset='utf8')
 		self.cur = self.conn.cursor()
 
