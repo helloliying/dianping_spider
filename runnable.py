@@ -347,7 +347,7 @@ class User(object):
 
 	
 
-a = UrlRunnable()
-a.run()
+# a = UrlRunnable()
+# a.run()
 #a.StoreUrl()
 
