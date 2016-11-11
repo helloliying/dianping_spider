@@ -20,9 +20,10 @@ class MysqlPool(object):
         @summary: 静态方法，从连接池中取出连接 
         @return MySQLdb.connection 
         """  
+
         if MysqlPool.__pool is None:  
-            __pool = PooledDB(creator=pymysql , host=Config.DBHOST , port=Config.DBPORT , user=Config.DBUSER , passwd=Config.DBPWD ,  
-                              db=Config.DBNAME , use_unicode=False , charset=Config.DBCHAR)  
+            __pool = PooledDB(creator=pymysql , host="127.0.0.1" , port=3306, user="root" , passwd="homelink",  
+                              db="dianping", use_unicode=False , charset='utf8')  
         return __pool.connection()  
    
     def getAll(self,sql,param=None):  
@@ -77,15 +78,20 @@ class MysqlPool(object):
             result = False  
         return result  
    
-    def insertOne(self,sql,value):  
+    def insert(self,dic_list,table_name,**postDic):  
         """ 
         @summary: 向数据表插入一条记录 
         @param sql:要插入的ＳＱＬ格式 
         @param value:要插入的记录数据tuple/list 
         @return: insertId 受影响的行数 
         """  
-        self._cursor.execute(sql,value)  
-        return self.__getInsertId()  
+
+        sql_join = "insert into  "+ table_name +"(" + ','.join(dic_list) + ") values  (\'%("+')s\',\'%('.join(dic_list)+") s\' )"
+        print (sql_join)
+        sql = sql_join % postDic
+        print (sql)
+        self._cursor.execute(sql)  
+        self._conn.commit()
    
     def insertMany(self,sql,values):  
         """ 

@@ -18,7 +18,7 @@ HTTP_HEADERS = {
 	'Accept-Language':'zh-CN,zh;q=0.8',
 	'Cache-Control':'max-age=0',
 	'Connection':'keep-alive',
-	'Cookie':'_hc.v=a2191b18-0b92-c093-4de3-e74d5fba8273.1473007045; __utma=205923334.618598470.1477727672.1477727672.1478019961.2; __utmz=205923334.1477727672.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); PHOENIX_ID=0a65026a-1583c6df3e8-bdfe90; s_ViewType=10; JSESSIONID=F770931C9A6A65A91A19BE5F3144942A; aburl=1; cy=2; cye=beijing',
+	'Cookie':'',
 	'Host':'www.dianping.com',
 	'Referer':'http://www.dianping.com/member/32513405',
 	'Upgrade-Insecure-Requests':'1',

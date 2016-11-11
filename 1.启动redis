@@ -35,4 +35,7 @@
   (6)./mysql
   (7)FLUSH PRIVILEGES; 
   (8)SET PASSWORD FOR 'root'@'localhost' = PASSWORD('你的新密码');  
-ß
+
+ 5.PATH="$PATH":/usr/local/mysql/bin 
+
+  nohup python2.7 startwork.py >> /homelink/dianping/log/dianping_store.log 2>&1 &

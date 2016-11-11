@@ -6,6 +6,7 @@ from httpparser import HttpParser
 from queue import Queue
 from redisclient import RedisConnect
 from mysqlclient import MysqlClient
+from mysqlpool import MysqlPool
 from log import Logger
 import time
 import sys
@@ -26,12 +27,12 @@ class UrlRunnable:
 		self.redisConn = RedisConnect()
 		self.start_url = "http://www.dianping.com/shopall/2/0"
 		self.logger = Logger()
-		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
-
+	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
+		self.mysqlConn = MysqlPool()
 
 	def saveHtml(self,url,param,html):
 		id = re.findall('[0-9]+',url)[0]
-		path = '/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
 		if os.path.exists(path) == False:
 			os.makedirs(path)
 		html_path = path + id+'_'+param+'.txt'
@@ -42,7 +43,7 @@ class UrlRunnable:
 	def linksUrl(self):
 		try:
 			html = self.httpRequest.get(self.start_url)
-			sites = self.httpParser.parseNode(html,'//div[@class="main_w"]/div/div[1]/dl')
+			sites = self.httpParser.parseNode(html,'//div[@class="main_w"]/div/div[1]/dl[1]')
 			postDic = {}
 			dic_list = ["tag_level_1","tag_level_2","tag_link","create_time","update_time"]
 			for site in sites:
@@ -56,18 +57,19 @@ class UrlRunnable:
 					postDic["tag_link"] = link_urls[i]
 					postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) 
 					postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-					#self.mysqlConn.insert(dic_list,"storeTag",**postDic)
+					self.mysqlConn.insert(dic_list,"storeTag",**postDic)
 		except:
 			print (sys.exc_info())
 		#return link_url
 
 	def run(self):
-		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
+	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		while self.redisConn.scard("dianping::tag")>0:
 	#	while self.redisConn.scard("test") >0 :
 			tag = self.redisConn.pop("dianping::tag")
 	#		tag = self.redisConn.pop("test")
 			url = "http://www.dianping.com"+tag
+			print (url)
 			self.logger.info("start StoreUrl:"+url)
 			postDic = {}
 			dic_list = ["store_url","store_name","father_url","father_tag","store_score","trade_area","location","cost","review","create_time","update_time","longitude","latitude"]
@@ -80,13 +82,17 @@ class UrlRunnable:
 				
 				try:
 					html = self.httpRequest.get(url+'p'+str(page))
-					time.sleep(5)
+
+					time.sleep(10)
 					self.logger.info("start StoreUrl: "+url+'p'+str(page))
+					print ("start StoreUrl: "+url+'p'+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@id="shop-all-list"]/ul/li')
+					print (sites)
+				
 					for site in sites:
 						store_urls = site.xpath('div[2]/div[1]/a[1]/@href')
 						store_html = self.httpRequest.get("http://www.dianping.com"+store_urls[0])
-						
+						print ("http://www.dianping.com"+store_urls[0])
 						self.logger.info("storeUrl request : http://www.dianping.com"+store_urls[0])
 						extract_address = re.findall("({lng:(.*),lat:(.*)})",store_html)
 						if extract_address:
@@ -133,10 +139,10 @@ class UrlRunnable:
 					self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
 					self.redisConn.sadd("failed::tag",tag)
 					self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
-				
+					print (sys.exc_info())
 				count = len(sites)
 					
-		#return link_url
+		return link_url
 
 
 class User(object):
@@ -146,6 +152,7 @@ class User(object):
 		self.redisConn = RedisConnect()
 		self.logger = Logger()
 		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
+		#self.mysqlCon = MysqlPool()
 
 	def UserUrl(self):
 		while self.redisConn.scard("dianping::store")>0:
@@ -164,6 +171,7 @@ class User(object):
 				try:
 					html = self.httpRequest.get(url+'?pageno='+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@class="comment-list"]/ul/li')
+					print (sites)
 					for site in sites:
 						user_url = site.xpath('div/a/@href')
 						print (user_url[0])
@@ -347,7 +355,7 @@ class User(object):
 
 	
 
-# a = UrlRunnable()
-# a.run()
-#a.StoreUrl()
+#a = UrlRunnable()
+#a.run()#
+#a.linksUrl()
 
