@@ -63,10 +63,10 @@ class UrlRunnable:
 
 	def run(self):
 		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
-	#	while self.redisConn.scard("dianping::tag")>0:
-		while self.redisConn.scard("test") >0 :
-	#		tag = self.redisConn.pop("dianping::tag")
-			tag = self.redisConn.pop("test")
+		while self.redisConn.scard("dianping::tag")>0:
+	#	while self.redisConn.scard("test") >0 :
+			tag = self.redisConn.pop("dianping::tag")
+	#		tag = self.redisConn.pop("test")
 			url = "http://www.dianping.com"+tag
 			self.logger.info("start StoreUrl:"+url)
 			postDic = {}
@@ -86,16 +86,15 @@ class UrlRunnable:
 					for site in sites:
 						store_urls = site.xpath('div[2]/div[1]/a[1]/@href')
 						store_html = self.httpRequest.get("http://www.dianping.com"+store_urls[0])
-						print ("http://www.dianping.com"+store_urls[0])
+						
 						self.logger.info("storeUrl request : http://www.dianping.com"+store_urls[0])
 						extract_address = re.findall("({lng:(.*),lat:(.*)})",store_html)
-						# if extract_address:
-						longitude = extract_address[0][1]
-						latitude = extract_address[0][2]
-						
-						postDic["longitude"] = longitude 
-						postDic["latitude"] =  latitude
-						#self.saveHtml(store_urls[0],"store",store_html)					
+						if extract_address:
+							longitude = extract_address[0][1]
+							latitude = extract_address[0][2]
+							postDic["longitude"] = longitude 
+							postDic["latitude"] =  latitude
+						self.saveHtml(store_urls[0],"store",store_html)					
 	
 						store_names = site.xpath('div[2]/div[1]/a[1]/@title')
 						father_tag = site.xpath('div[2]/div[3]/a[1]/span/text()')
@@ -133,11 +132,9 @@ class UrlRunnable:
 				except:
 					self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
 					self.redisConn.sadd("failed::tag",tag)
-					print(url+'p'+str(page))
-					print (sys.exc_info())
 					self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
 				
-					count = len(sites)
+				count = len(sites)
 					
 		#return link_url
 
