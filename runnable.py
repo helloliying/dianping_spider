@@ -63,10 +63,10 @@ class UrlRunnable:
 
 	def run(self):
 		self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
-		while self.redisConn.scard("dianping::tag")>0:
-	#	while self.redisConn.scard("test") >0 :
-			tag = self.redisConn.pop("dianping::tag")
-	#		tag = self.redisConn.pop("test")
+	#	while self.redisConn.scard("dianping::tag")>0:
+		while self.redisConn.scard("test") >0 :
+	#		tag = self.redisConn.pop("dianping::tag")
+			tag = self.redisConn.pop("test")
 			url = "http://www.dianping.com"+tag
 			self.logger.info("start StoreUrl:"+url)
 			postDic = {}
@@ -76,19 +76,23 @@ class UrlRunnable:
 			count = 19
 	
 			while count>=15 and page<=50:
-					page = page+1
+				page = page+1
 				
-				#try:
+				try:
 					html = self.httpRequest.get(url+'p'+str(page))
-					#self.logger.info("start StoreUrl: "+url+'p'+str(page))
+					time.sleep(5)
+					self.logger.info("start StoreUrl: "+url+'p'+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@id="shop-all-list"]/ul/li')
 					for site in sites:
 						store_urls = site.xpath('div[2]/div[1]/a[1]/@href')
 						store_html = self.httpRequest.get("http://www.dianping.com"+store_urls[0])
-						
+						print ("http://www.dianping.com"+store_urls[0])
+						self.logger.info("storeUrl request : http://www.dianping.com"+store_urls[0])
 						extract_address = re.findall("({lng:(.*),lat:(.*)})",store_html)
+						# if extract_address:
 						longitude = extract_address[0][1]
 						latitude = extract_address[0][2]
+						
 						postDic["longitude"] = longitude 
 						postDic["latitude"] =  latitude
 						#self.saveHtml(store_urls[0],"store",store_html)					
@@ -104,7 +108,7 @@ class UrlRunnable:
 						self.redisConn.sadd("dianping::store",store_urls[0])	
 						postDic["store_url"] = store_urls[0]
 						postDic["store_name"] = store_names[0].replace("'","")
-						print (store_names[0])
+						self.logger.info(store_names[0])
 						postDic["father_url"] = tag
 						postDic["father_tag"] = father_tag[0]
 						postDic["store_score"] = store_score[0]
@@ -126,15 +130,15 @@ class UrlRunnable:
 						self.mysqlConn.insert(dic_list,"store",**postDic)
 					self.redisConn.sadd("success::tag::url",url+'p'+str(page))
 				
-			#	except:
-			#		self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
-			#		self.redisConn.sadd("failed::tag",tag)
-			#		print (type(sys.exc_info()))
-			#		print (sys.exc_info())
-					#self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error '+sys.exc_info())
+				except:
+					self.redisConn.sadd("failed::tag::url",url+'p'+str(page))
+					self.redisConn.sadd("failed::tag",tag)
+					print(url+'p'+str(page))
+					print (sys.exc_info())
+					self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
 				
 					count = len(sites)
-					time.sleep(5)
+					
 		#return link_url
 
 
@@ -346,7 +350,7 @@ class User(object):
 
 	
 
-#a = UrlRunnable()
-#a.run()
+a = UrlRunnable()
+a.run()
 #a.StoreUrl()
 
