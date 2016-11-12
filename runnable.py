@@ -29,10 +29,12 @@ class UrlRunnable:
 		self.logger = Logger()
 	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		self.mysqlConn = MysqlPool()
+		self.store_file = open("/homelink/dianping/file/store_urls.txt","a")
 
 	def saveHtml(self,url,param,html):
 		id = re.findall('[0-9]+',url)[0]
-		path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+	#	path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path =  '/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
 		if os.path.exists(path) == False:
 			os.makedirs(path)
 		html_path = path + id+'_'+param+'.txt'
@@ -132,7 +134,10 @@ class UrlRunnable:
 							postDic["review"] = ''
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 						postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"store",**postDic)
+						line = json.dumps(dict(postDic),ensure_ascii=False)
+						self.store_file.write(line+'\n')
+						self.store_file.flush()
+					#	self.mysqlConn.insert(dic_list,"store",**postDic)
 					self.redisConn.sadd("success::tag::url",url+'p'+str(page))
 				
 				except:
@@ -142,7 +147,7 @@ class UrlRunnable:
 					print (sys.exc_info())
 				count = len(sites)
 					
-		return link_url
+#		return link_url
 
 
 class User(object):
