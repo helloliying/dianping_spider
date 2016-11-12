@@ -156,15 +156,30 @@ class User(object):
 		self.httpParser = HttpParser()
 		self.redisConn = RedisConnect()
 		self.logger = Logger()
+		self.user_file = open("/homelink/dianping/file/user_urls.txt","a")
 		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
-		#self.mysqlCon = MysqlPool()
+		self.mysqlCon = MysqlPool()
 
-	def UserUrl(self):
-		while self.redisConn.scard("dianping::store")>0:
-			
-			store = self.redisConn.pop("dianping::store") 
+	def saveHtml(self,url,param,html,page):
+		id = re.findall('[0-9]+',url)[0]
+		print (id)
+	#	path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path =  '/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		if os.path.exists(path) == False:
+			os.makedirs(path)
+		html_path = path + id+'_'+param+'_'+page+'.txt'
+		f = open(html_path,"a")
+		f.write(html)
+		f.flush()	
+
+	def run(self):
+		#while self.redisConn.scard("dianping::store")>0:
+		while self.redisConn.scard("test")>0:	
+			#store = self.redisConn.pop("dianping::store")
+			store = self.redisConn.pop("test") 
 			url = "http://www.dianping.com"+store+'/review_more'
-			
+			print (url)
+			self.logger.info(url)
 			dic_list = ["user_url","user_name","user_image","user_level","create_time","update_time"]
 			postDic = {}
 		
@@ -175,8 +190,11 @@ class User(object):
 				page = page+1
 				try:
 					html = self.httpRequest.get(url+'?pageno='+str(page))
+					self.saveHtml(store,"user",html,page)
+					print (url+'?pageno='+str(page))
+					self.logger.info(url+'?pageno='+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@class="comment-list"]/ul/li')
-					print (sites)
+					print (sites[0])
 					for site in sites:
 						user_url = site.xpath('div/a/@href')
 						print (user_url[0])
@@ -194,13 +212,17 @@ class User(object):
 						else:
 							postDic["user_level"] = ''
 						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                                                postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						#self.mysqlConn.insert(dic_list,"user",**postDic)
-					self.redisConn.sadd("success::store",store)
+                        postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+						self.mysqlConn.insert(dic_list,"user",**postDic)
+						line = json.dumps(dict(postDic),ensure_ascii=False)
+						self.user_file.write(line+'\n')
+						self.user_file.flush()
+					self.redisConn.sadd("success::store::user",url+'?pageno='+str(page))
 				
 				except:
-					self.redisConn.sadd("failed::store",store)	
+					self.redisConn.sadd("failed::store::user",url+'?pageno='+str(page))	
 					print (sys.exc_info())	
+					self.logger.debug("start UserUrl:"+url+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
 
 	def UserReviewTrade(self):
 	#	while self.redisConn.scard("dianping::review::user")>0:
