@@ -22,4 +22,6 @@ class RedisConnect:
 
 	def pop(self,db_name):
 		return self.redisConn.spop(db_name)
-
+	
+	def srem(self,db_name,obj):
+		self.redisConn.srem(db_name,obj)

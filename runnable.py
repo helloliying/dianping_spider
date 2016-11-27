@@ -1,7 +1,7 @@
 #-*-coding:utf8-*-
 #! /usr/bin/python
 #encoding=utf-8
-from http import  HttpRequest
+#from http import  HttpRequest
 from httpparser import HttpParser
 from queue import Queue
 from redisclient import RedisConnect
@@ -16,7 +16,8 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 import json 
 import time
-
+from proxy import HttpRequest
+import random
 
 
 class UrlRunnable:
@@ -29,7 +30,7 @@ class UrlRunnable:
 		self.logger = Logger()
 	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		self.mysqlConn = MysqlPool()
-		self.store_file = open("/homelink/dianping/file/store_urls.txt","a")
+		self.store_file = open("/opt/dianping/file/store_urls.txt","a")
 
 	def saveHtml(self,url,param,html):
 		id = re.findall('[0-9]+',url)[0]
@@ -65,7 +66,6 @@ class UrlRunnable:
 		#return link_url
 
 	def run(self):
-	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		while self.redisConn.scard("dianping::tag")>0:
 	#	while self.redisConn.scard("test") >0 :
 			tag = self.redisConn.pop("dianping::tag")
@@ -84,8 +84,7 @@ class UrlRunnable:
 				
 				try:
 					html = self.httpRequest.get(url+'p'+str(page))
-
-					time.sleep(10)
+					time.sleep(random.randint(3,8))
 					self.logger.info("start StoreUrl: "+url+'p'+str(page))
 					print ("start StoreUrl: "+url+'p'+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@id="shop-all-list"]/ul/li')
@@ -103,7 +102,7 @@ class UrlRunnable:
 							postDic["longitude"] = longitude 
 							postDic["latitude"] =  latitude
 						self.saveHtml(store_urls[0],"store",store_html)					
-	
+		
 						store_names = site.xpath('div[2]/div[1]/a[1]/@title')
 						father_tag = site.xpath('div[2]/div[3]/a[1]/span/text()')
    						store_score = site.xpath('div[2]/div[2]/span/@class')
@@ -137,7 +136,7 @@ class UrlRunnable:
 						line = json.dumps(dict(postDic),ensure_ascii=False)
 						self.store_file.write(line+'\n')
 						self.store_file.flush()
-					#	self.mysqlConn.insert(dic_list,"store",**postDic)
+						self.mysqlConn.insert(dic_list,"store",**postDic)
 					self.redisConn.sadd("success::tag::url",url+'p'+str(page))
 				
 				except:
@@ -156,27 +155,27 @@ class User(object):
 		self.httpParser = HttpParser()
 		self.redisConn = RedisConnect()
 		self.logger = Logger()
-		self.user_file = open("/homelink/dianping/file/user_urls.txt","a")
+		self.user_file = open("/opt/dianping/file/user_urls_2.txt","a")
 		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
-		self.mysqlCon = MysqlPool()
+		self.mysqlConn = MysqlPool()
 
 	def saveHtml(self,url,param,html,page):
 		id = re.findall('[0-9]+',url)[0]
 		print (id)
 	#	path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
-		path =  '/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path =  '/opt/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
 		if os.path.exists(path) == False:
 			os.makedirs(path)
-		html_path = path + id+'_'+param+'_'+page+'.txt'
+		html_path = path + id+'_'+param+'_'+str(page)+'.txt'
 		f = open(html_path,"a")
 		f.write(html)
 		f.flush()	
 
 	def run(self):
-		#while self.redisConn.scard("dianping::store")>0:
-		while self.redisConn.scard("test")>0:	
-			#store = self.redisConn.pop("dianping::store")
-			store = self.redisConn.pop("test") 
+		while self.redisConn.scard("dianping::store")>0:
+#		while self.redisConn.scard("test")>0:	
+			store = self.redisConn.pop("dianping::store")
+#			store = self.redisConn.pop("test") 
 			url = "http://www.dianping.com"+store+'/review_more'
 			print (url)
 			self.logger.info(url)
@@ -188,47 +187,64 @@ class User(object):
 	
 			while count == 20: 
 				page = page+1
+				count = 0
 				try:
-					html = self.httpRequest.get(url+'?pageno='+str(page))
-					self.saveHtml(store,"user",html,page)
 					print (url+'?pageno='+str(page))
-					self.logger.info(url+'?pageno='+str(page))
-					sites = self.httpParser.parseNode(html,'//div[@class="comment-list"]/ul/li')
-					print (sites[0])
-					for site in sites:
-						user_url = site.xpath('div/a/@href')
-						print (user_url[0])
-						self.redisConn.sadd("dianping::review::user",*user_url)
-						self.redisConn.sadd("dianping::wish::user",*user_url)
-						self.redisConn.sadd("dianping::checkin::user",*user_url)
-						user_name = site.xpath('div/p/a/text()')
-						user_image = site.xpath('div/a/img/@src')
-						user_level = site.xpath('div/p[2]/span/@class')
-						postDic["user_url"] = user_url[0]
-						postDic["user_name"] = user_name[0].replace("'","")
-						postDic["user_image"] = user_image[0]
-						if user_level:
-							postDic["user_level"] = user_level[0]
-						else:
-							postDic["user_level"] = ''
-						postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                        postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-						self.mysqlConn.insert(dic_list,"user",**postDic)
-						line = json.dumps(dict(postDic),ensure_ascii=False)
-						self.user_file.write(line+'\n')
-						self.user_file.flush()
-					self.redisConn.sadd("success::store::user",url+'?pageno='+str(page))
+					html,code = self.httpRequest.get(url+'?pageno='+str(page))
+					print (code)
+					if code == 404 or code == 403 or code == 429:
+						print ("match error stop !!!")
+						self.redisConn.sadd("failed::store::user_1",url+'?pageno='+str(page))
+                                        	self.redisConn.sadd("failed::store",store)
+						time.sleep(60*20)
+					else:
+					#	time.sleep(random.randint(3,6))
+						time.sleep(2)
+						self.saveHtml(store,"user",html,page)
+						print (url+'?pageno='+str(page))
+						self.logger.info(url+'?pageno='+str(page))
+						sites = self.httpParser.parseNode(html,'//div[@class="comment-list"]/ul/li')
+						print (sites[0])
+						for site in sites:
+							user_url = site.xpath('div/a/@href')
+							print (user_url[0])
+							self.redisConn.sadd("dianping::review::user",*user_url)
+							self.redisConn.sadd("dianping::wish::user",*user_url)
+							self.redisConn.sadd("dianping::checkin::user",*user_url)
+							user_name = site.xpath('div/p/a/text()')
+							user_image = site.xpath('div/a/img/@src')
+							user_level = site.xpath('div/p[2]/span/@class')
+							postDic["user_url"] = user_url[0]
+							postDic["user_name"] = user_name[0].replace("'","")
+							postDic["user_image"] = user_image[0]
+							postDic["store"] = store
+							if user_level:
+								postDic["user_level"] = user_level[0]
+							else:
+								postDic["user_level"] = ''
+							postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+                        				postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+							count = len(sites)
+					#		self.mysqlConn.insert(dic_list,"user",**postDic)
+							line = json.dumps(dict(postDic),ensure_ascii=False)
+							self.user_file.write(line+'\n')
+							self.user_file.flush()
+						self.redisConn.sadd("success::store::user",url+'?pageno='+str(page))
+						self.redisConn.sadd("success::store",store)
 				
 				except:
-					self.redisConn.sadd("failed::store::user",url+'?pageno='+str(page))	
+				#	self.redisConn.sadd("failed::store::user",url+'?pageno='+str(page))	
 					print (sys.exc_info())	
-					self.logger.debug("start UserUrl:"+url+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
-
+					self.redisConn.sadd("failed::store::user_1",url+'?pageno='+str(page))
+					self.redisConn.sadd("failed::store",store)
+					self.logger.debug("start UserUrl:"+url+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))	
+				time.sleep(10)
+				
 	def UserReviewTrade(self):
-	#	while self.redisConn.scard("dianping::review::user")>0:
-		while self.redisConn.scard("test")>0:
-		#	user = self.redisConn.pop("dianping::review::user")
-			user = self.redisConn.pop("test")
+		while self.redisConn.scard("dianping::review::user")>0:
+	#	while self.redisConn.scard("test")>0:
+			user = self.redisConn.pop("dianping::review::user")
+		#	user = self.redisConn.pop("test")
 			url = "http://www.dianping.com"+user
 			print (url)
 			postDic = {}
@@ -382,7 +398,6 @@ class User(object):
 
 	
 
-#a = UrlRunnable()
+#a = User()
 #a.run()#
 #a.linksUrl()
-

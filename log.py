@@ -11,7 +11,7 @@ class Logger(object):
 
     def __createLogger(self):  
     #    LOG_FILE = "/Users/homelink/test/dianping.log"  
-        LOG_FILE = "/homelink/dianping/log/dianping_user.log"
+        LOG_FILE = "/opt/dianping/log/dianping_user.log"
         handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes = 20*1024*1024, backupCount = 10); # 实例化handler  
         fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s - [%(filename)s:%(lineno)s]"  
         formatter = logging.Formatter(fmt);         # 实例化formatter    

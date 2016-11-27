@@ -10,5 +10,5 @@ sys.setdefaultencoding('utf-8')
 
 #run = UrlRunnable()
 run = User()
-thread = ThreadPool(runnable=run,num_of_threads = 4)
+thread = ThreadPool(runnable=run,num_of_threads = 6)
 thread.wait_for_complete()
