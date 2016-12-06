@@ -18,8 +18,7 @@ HTTP_HEADERS = {
 	'Accept-Language':'zh-CN,zh;q=0.8',
 	'Cache-Control':'max-age=0',
 	'Connection':'keep-alive',
-#	'Cookie':'_hc.v=433ac401-2e99-61dc-513e-d94ae4f02385.1479721275; __utma=1.1976915789.1479721275.1479721275.1479721275.1; __utmc=1; __utmz=1.1479721275.1.1.utmcsr=baidu|utmccn=(organic)|utmcmd=organic; s_ViewType=10; PHOENIX_ID=0a01070e-1588648a1aa-b93338; JSESSIONID=C600AF39DDA087D454B1C24FE50939B2; aburl=1; cy=2; cye=beijing',
-	'Cookie':'_hc.v="\"eea4ca0c-db9a-4f8d-9aee-94789e096462.1479794513\""; PHOENIX_ID=0a01677b-1589003038d-14482ed; s_ViewType=10; JSESSIONID=9F96B4203CF5F5E561A8824AF91D5580; aburl=1; cy=2; cye=beijing',
+	'Cookie':'showNav=#nav-tab|0|1; navCtgScroll=243; _hc.v="\"eea4ca0c-db9a-4f8d-9aee-94789e096462.1479794513\""; dper=56a37ab9b02a650a7c9fef87dee6d27fbf2d9e1ab218272202ea7ac978ca10ee; ua=%E6%9D%8E%E5%A4%9A%E5%A4%9A%E7%9A%84%E5%A4%8F%E5%A4%A9; __utma=205923334.406525566.1480045399.1480045399.1480045399.1; __utmc=205923334; __utmz=205923334.1480045399.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); PHOENIX_ID=0a0102fe-158a8ae8a9a-29df578; ll=7fd06e815b796be3df069dec7836c3df; s_ViewType=10; JSESSIONID=90A3611AF42719064478A354A6DB7FFE; aburl=1; cy=2; cye=beijing',
 	'Host':'www.dianping.com',
 	'Upgrade-Insecure-Requests':'1',
 	'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'

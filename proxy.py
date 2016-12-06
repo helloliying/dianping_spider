@@ -57,13 +57,12 @@ class HttpRequest:
 		
 	def get(self,url,params = None,header = None):
 		print ("====proxy===")
-		print (HTTP_HEADERS)
 		request_url = url
 		data = None
 		proxyHost = "proxy.abuyun.com"
 		proxyPort = "9010"
-		proxyUser = "H89R998YFJK03S7D"
-		proxyPass = "101D9BCDE48DEBA2"
+		proxyUser = "H215X75AO3O6S96D"
+		proxyPass = "16DF963DB93D1328"
 		proxyMeta = "http://%(user)s:%(pass)s@%(host)s:%(port)s" % {
 			"host" : proxyHost,
 			"port" : proxyPort,

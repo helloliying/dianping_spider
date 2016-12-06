@@ -87,9 +87,9 @@ class MysqlPool(object):
         """  
 
         sql_join = "insert into  "+ table_name +"(" + ','.join(dic_list) + ") values  (\'%("+')s\',\'%('.join(dic_list)+") s\' )"
-        print (sql_join)
+#        print (sql_join)
         sql = sql_join % postDic
-        print (sql)
+ #       print (sql)
         self._cursor.execute(sql)  
         self._conn.commit()
    

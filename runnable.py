@@ -30,46 +30,68 @@ class UrlRunnable:
 		self.logger = Logger()
 	#	self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		self.mysqlConn = MysqlPool()
-		self.store_file = open("/opt/dianping/file/store_urls.txt","a")
+		self.store_file = open("/opt_c/dianping/file/store_urls.txt","a")
+	#	self.store_file = open("/homelink/dianping/file/store_urls.txt","a")
 
 	def saveHtml(self,url,param,html):
 		id = re.findall('[0-9]+',url)[0]
 	#	path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
-		path =  '/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path =  '/opt_c/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
 		if os.path.exists(path) == False:
 			os.makedirs(path)
 		html_path = path + id+'_'+param+'.txt'
 		f = open(html_path,"a")
 		f.write(html)
 		f.flush()
+	
+	
+	def regUrl(self,link):
+		try:
+			url = "http://www.dianping.com"+link
+			print (url)
+			html,code = self.httpRequest.get(url)
+			time.sleep(2)
+		#	hrefs = self.httpParser.parseHref(html,'//div[@id="region-nav"]/a/@href')
+			hrefs = self.httpParser.parseHref(html,'//div[@id="region-nav-sub"]/a/@href')	
+			print (hrefs)
+			self.redisConn.sadd("dianping::tag::reg_sub",*hrefs)
+		except:
+			print (sys.exc_info())
+			self.redisConn.sadd("failed::tag::reg_sub",link)
 
 	def linksUrl(self):
 		try:
-			html = self.httpRequest.get(self.start_url)
-			sites = self.httpParser.parseNode(html,'//div[@class="main_w"]/div/div[1]/dl[1]')
+			html,code = self.httpRequest.get(self.start_url)
+			print (code)
+			sites = self.httpParser.parseNode(html,'//div[@class="main_w"]/div/div[1]/dl[17]')
+			print (sites)
 			postDic = {}
 			dic_list = ["tag_level_1","tag_level_2","tag_link","create_time","update_time"]
 			for site in sites:
 				tags = site.xpath('dt/a/text()')
 				link_urls = site.xpath('dd/ul/li/a/@href')
-				self.redisConn.sadd("dianping::tag",*link_urls)
+				print (link_urls)
+			#	self.redisConn.sadd("dianping::tag",*link_urls)
 				link_tags = site.xpath('dd/ul/li/a/text()')
 				for i in range(len(link_tags)):
 					postDic["tag_level_1"] = tags[0]
 					postDic["tag_level_2"] = link_tags[i]
 					postDic["tag_link"] = link_urls[i]
+					self.regUrl(link_urls[i])
 					postDic["create_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) 
 					postDic["update_time"] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-					self.mysqlConn.insert(dic_list,"storeTag",**postDic)
+			#		self.mysqlConn.insert(dic_list,"storeTag",**postDic)
 		except:
 			print (sys.exc_info())
 		#return link_url
 
 	def run(self):
-		while self.redisConn.scard("dianping::tag")>0:
-	#	while self.redisConn.scard("test") >0 :
-			tag = self.redisConn.pop("dianping::tag")
-	#		tag = self.redisConn.pop("test")
+	#	while self.redisConn.scard("dianping::tag")>0:
+		while self.redisConn.scard("dianping::tag::reg") >0 :
+	#	while self.redisConn.scard("test_1")>0:
+	#		tag = self.redisConn.pop("dianping::tag")
+			tag = self.redisConn.pop("dianping::tag::reg")
+	#		tag = self.redisConn.pop("test_1")
 			url = "http://www.dianping.com"+tag
 			print (url)
 			self.logger.info("start StoreUrl:"+url)
@@ -81,18 +103,21 @@ class UrlRunnable:
 	
 			while count>=15 and page<=50:
 				page = page+1
+				count = 0
 				
 				try:
-					html = self.httpRequest.get(url+'p'+str(page))
-					time.sleep(random.randint(3,8))
+					html,code = self.httpRequest.get(url+'p'+str(page))
+					time.sleep(2)
+					print (code)
 					self.logger.info("start StoreUrl: "+url+'p'+str(page))
 					print ("start StoreUrl: "+url+'p'+str(page))
 					sites = self.httpParser.parseNode(html,'//div[@id="shop-all-list"]/ul/li')
 					print (sites)
-				
+					count = len(sites)				
 					for site in sites:
 						store_urls = site.xpath('div[2]/div[1]/a[1]/@href')
-						store_html = self.httpRequest.get("http://www.dianping.com"+store_urls[0])
+						time.sleep(2)
+						store_html,code = self.httpRequest.get("http://www.dianping.com"+store_urls[0])
 						print ("http://www.dianping.com"+store_urls[0])
 						self.logger.info("storeUrl request : http://www.dianping.com"+store_urls[0])
 						extract_address = re.findall("({lng:(.*),lat:(.*)})",store_html)
@@ -111,7 +136,9 @@ class UrlRunnable:
    						cost = site.xpath('div[2]/div[2]/a[2]/b/text()')
    						review = site.xpath('div[2]/div[2]/a/b/text()')
    						father_url = tag
-						self.redisConn.sadd("dianping::store",store_urls[0])	
+						if not self.redisConn.sismember("dianping::store::bak",store_urls[0]):
+							self.redisConn.sadd("dianping::store",store_urls[0])	
+							self.redisConn.sadd("dianping::store::bak",store_urls[0])	
 						postDic["store_url"] = store_urls[0]
 						postDic["store_name"] = store_names[0].replace("'","")
 						self.logger.info(store_names[0])
@@ -144,7 +171,7 @@ class UrlRunnable:
 					self.redisConn.sadd("failed::tag",tag)
 					self.logger.debug("start StoreUrl:"+url+'p'+str(page)+' error :'+str(sys.exc_info()[0])+','+str(sys.exc_info()[1])+','+str(sys.exc_info()[2]))
 					print (sys.exc_info())
-				count = len(sites)
+				
 					
 #		return link_url
 
@@ -155,7 +182,7 @@ class User(object):
 		self.httpParser = HttpParser()
 		self.redisConn = RedisConnect()
 		self.logger = Logger()
-		self.user_file = open("/opt/dianping/file/user_urls_2.txt","a")
+		self.user_file = open("/opt_c/dianping/file/user_urls_4.txt","a")
 		#self.mysqlConn = MysqlClient("127.0.0.1","root","homelink",'dianping',3306)
 		self.mysqlConn = MysqlPool()
 
@@ -163,7 +190,7 @@ class User(object):
 		id = re.findall('[0-9]+',url)[0]
 		print (id)
 	#	path = '/Users/homelink/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
-		path =  '/opt/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
+		path =  '/opt_c/dianping/html/'+param+'/'+id[0:3]+'/'+id[3:6]+'/'
 		if os.path.exists(path) == False:
 			os.makedirs(path)
 		html_path = path + id+'_'+param+'_'+str(page)+'.txt'
@@ -397,7 +424,7 @@ class User(object):
 			 	print (sys.exc_info())											
 
 	
-
+#a = UrlRunnable()
 #a = User()
-#a.run()#
+#a.run()
 #a.linksUrl()
